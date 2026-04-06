@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
 export async function updateSession(request) {
-  const response = NextResponse.next({ request: { headers: request.headers } });
+  const response = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -10,12 +10,9 @@ export async function updateSession(request) {
     {
       cookies: {
         getAll() {
-          return request.cookies
-            .getAll()
-            .map(({ name, value }) => ({ name, value }));
+          return request.cookies.getAll();
         },
         setAll(cookies) {
-          // Write refreshed auth cookies onto the response
           cookies.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
@@ -24,16 +21,12 @@ export async function updateSession(request) {
     }
   );
 
-  // Get current session (use getSession so you get the session object)
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
+  const { error } = await supabase.auth.getSession();
 
-  // ✅ Gracefully handle invalid refresh token
   if (error?.code === "refresh_token_not_found") {
+    // Optional: you could clear cookies here if needed
     return { response, session: null };
   }
 
-  return { response, session };
+  return { response };
 }

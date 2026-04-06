@@ -3,23 +3,23 @@ import { useState } from "react";
 
 import { useForm, useFieldArray } from "react-hook-form";
 import { BiDuplicate, BiPlus, BiSolidTrash } from "react-icons/bi";
-export default function QuestionBuilder() {
+export default function QuestionBuilder({ quiz }) {
+  console.log(quiz.title);
   const [openMenu, setOpenMenu] = useState(null);
-
   const { register, control, handleSubmit, setValue, watch } = useForm({
     defaultValues: {
       details: {
-        title: "",
-        grade: "",
-        subject: "",
-        quarter: "",
-        objectives: "",
+        title: quiz?.title || "",
+        grade: quiz?.grade || "",
+        subject: quiz?.subject || "",
+        quarter: quiz?.quarter || "",
+        objectives: quiz?.objectives || "",
       },
-      questions: [
+      questions: quiz?.questions || [
         {
           id: 1,
           question: "",
-          layout: "col", // new field
+          layout: "col",
           options: [
             { id: 1, label: "option 1", value: "A" },
             { id: 2, label: "option 2", value: "B" },
