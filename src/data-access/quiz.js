@@ -7,18 +7,27 @@ export async function requireUser() {
   const supabase = await createClient();
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (error || !user) {
     redirect("/login");
   }
 
-  return { supabase, session };
+  const userInfo = {
+    id: user.id,
+    email: user.email,
+    name:
+      user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+    avatar: user.user_metadata?.avatar_url || null,
+  };
+
+  return { supabase, user: userInfo };
 }
 
 export async function createQuiz() {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase
     .from("quizzes")
@@ -26,6 +35,7 @@ export async function createQuiz() {
       {
         title: "Untitled Quiz",
         grade: "grade 1",
+        owner_id: user.id, // 🔥 important for ownership
       },
     ])
     .select()
@@ -36,16 +46,16 @@ export async function createQuiz() {
     return;
   }
 
-  // redirect to edit page (recommended UX)
   redirect(`/edit/${data.id}`);
 }
 
 export async function getQuiz() {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase
     .from("quizzes")
     .select("*")
+    .eq("owner_id", user.id) // 🔥 filter by user
     .order("created_at", { ascending: false });
 
   if (error) {
