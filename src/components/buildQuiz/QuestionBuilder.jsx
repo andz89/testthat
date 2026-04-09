@@ -7,10 +7,11 @@ import QuestionInput from "./QuestionInput";
 import LayoutOptions from "./LayoutOptions";
 import MultipleChoicesInput from "./MultipleChoicesInput";
 import FillTheBlankInput from "./FillTheBlankInput";
-import QuizTypeOptions from "./QuizTypeOptions";
+import { useEffect } from "react";
+import { useQuizStore } from "../../store/QuizStore";
+import QuestionFooter from "./QuestionFooter";
 
 export default function QuestionBuilder({ quiz }) {
-  console.log(quiz.title);
   const [openMenu, setOpenMenu] = useState(null);
   const { register, control, handleSubmit, setValue, watch } = useForm({
     defaultValues: {
@@ -38,12 +39,37 @@ export default function QuestionBuilder({ quiz }) {
     },
   });
 
+  const { setDetails, setQuestions } = useQuizStore();
+
+  const _details = watch("details");
+  const _questions = watch("questions");
+
+  useEffect(() => {
+    setDetails(_details);
+  }, [_details]);
+
+  useEffect(() => {
+    setQuestions(_questions);
+  }, [_questions]);
+
   const { fields, append, remove, insert } = useFieldArray({
     control,
     name: "questions",
   });
-  const onSubmit = (data) => {
-    console.log(data);
+  const { details, questions } = useQuizStore();
+
+  const onSubmit = async () => {
+    const payload = {
+      details,
+      questions,
+    };
+
+    console.log("FROM ZUSTAND:", payload);
+
+    // await fetch("/api/quiz", {
+    //   method: "POST",
+    //   body: JSON.stringify(payload),
+    // });
   };
   const duplicateQuestion = (index) => {
     const question = watch(`questions.${index}`);
@@ -87,28 +113,30 @@ export default function QuestionBuilder({ quiz }) {
                       watch={watch}
                       setValue={setValue}
                     />
+                    {/********************** end *****************************/}
 
-                    {/* ================================================================layout options buttons  =============================================================*/}
-                    <LayoutOptions
-                      register={register}
-                      index={index}
-                      type={type}
-                    />
-                    {/* ================================================================ answer input for fill in the blank quiz type  =============================================================*/}
-                    <FillTheBlankInput
-                      register={register}
-                      index={index}
-                      type={type}
-                    />
+                    {/* ============================= layout options buttons  =============================================================*/}
+                    {type !== "short" && (
+                      <LayoutOptions register={register} index={index} />
+                    )}
+                    {/********************** end *****************************/}
 
+                    {/* ============================ answer input for fill in the blank quiz type  =============================================================*/}
+
+                    {type === "short" && (
+                      <FillTheBlankInput register={register} index={index} />
+                    )}
+                    {/********************** end *****************************/}
+
+                    {/* ======================================= multiple choices input  =============================================================*/}
                     {type !== "short" && (
                       <div
                         className={`gap-2 ${
                           layout === "row"
                             ? "flex flex-row flex-wrap justify-around"
                             : layout === "grid"
-                            ? "grid grid-cols-2"
-                            : "flex flex-col"
+                              ? "grid grid-cols-2"
+                              : "flex flex-col"
                         }`}
                       >
                         {field.options.map((opt, optIndex) => (
@@ -122,50 +150,21 @@ export default function QuestionBuilder({ quiz }) {
                         ))}
                       </div>
                     )}
+                    {/********************** end *****************************/}
                   </div>
+
+                  {/* =========================== question footer buttons  =============================================================*/}
                   <div className="flex items-center justify-end gap-3 mt-5 w-full">
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu(openMenu === index ? null : index)
-                        }
-                        className="flex cursor-pointer items-center justify-center w-9 h-9 rounded-md border border-slate-300 hover:bg-slate-100 hover:border-slate-400 transition"
-                      >
-                        <BiPlus size={18} className="text-slate-700" />
-                      </button>
-
-                      {openMenu === index && (
-                        <QuizTypeOptions
-                          index={index}
-                          insert={insert}
-                          setOpenMenu={setOpenMenu}
-                        />
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => duplicateQuestion(index)}
-                      className="flex cursor-pointer items-center justify-center w-9 h-9 rounded-md border border-slate-300 hover:bg-blue-50 hover:border-blue-400 transition"
-                    >
-                      <BiDuplicate
-                        size={18}
-                        className="text-slate-700 hover:text-blue-600"
-                      />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="flex cursor-pointer items-center justify-center w-9 h-9 rounded-md border border-slate-300 hover:bg-red-50 hover:border-red-400 transition"
-                    >
-                      <BiSolidTrash
-                        size={18}
-                        className="text-slate-700 hover:text-red-600"
-                      />
-                    </button>
+                    <QuestionFooter
+                      index={index}
+                      setOpenMenu={setOpenMenu}
+                      insert={insert}
+                      duplicateQuestion={duplicateQuestion}
+                      remove={remove}
+                      openMenu={openMenu}
+                    />
                   </div>
+                  {/********************** end *****************************/}
                 </div>
               );
             })}
