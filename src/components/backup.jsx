@@ -8,74 +8,42 @@ import MultipleChoicesInput from "./MultipleChoicesInput";
 import FillTheBlankInput from "./FillTheBlankInput";
 import QuestionFooter from "./QuestionFooter";
 import { useQuizStore } from "../../store/QuizStore";
-import { useDebounce } from "../../hooks/useDebounce";
+
 export default function QuestionBuilder({ quiz }) {
   const [openMenu, setOpenMenu] = useState(null);
 
-  const { questions, addQuestion, options, clearDirty } = useQuizStore();
-
-  const debouncedQuestions = useDebounce(questions, 2500);
-  const debouncedOptions = useDebounce(options, 2500);
-  const isSavingRef = useRef(false);
-
-  useEffect(() => {
-    const dirtyQuestions = debouncedQuestions.filter((q) => q.isDirty);
-    const dirtyOptions = debouncedOptions.filter((o) => o.isDirty);
-
-    if (dirtyQuestions.length === 0 && dirtyOptions.length === 0) return;
-
-    if (isSavingRef.current) return; // 🚫 prevent overlap
-
-    const save = async () => {
-      isSavingRef.current = true;
-
-      console.log("Saving...", { dirtyQuestions, dirtyOptions });
-
-      // await supabase save...
-
-      clearDirty(
-        dirtyQuestions.map((q) => q.id),
-        dirtyOptions.map((o) => o.id),
-      );
-
-      isSavingRef.current = false;
-    };
-
-    save();
-  }, [debouncedQuestions, debouncedOptions]);
-
-  useEffect(() => {
-    if (questions.length === 0) {
-      addQuestion();
-    }
-  }, []);
+  const { questions, options } = useQuizStore();
 
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-[720px] mx-auto py-10 mb-20">
+        {/* Submit button */}
+        <div className="fixed bottom-4 right-4">
+          <button className="bg-blue-600 text-white text-lg px-6 py-3 rounded hover:bg-blue-700">
+            Save Quiz
+          </button>
+        </div>
+
         <div className="flex flex-col">
           {/* Quiz Details */}
-          <QuizDetails quiz={quiz} />
+          <QuizDetails />
 
           {/* Questions */}
-
-          {questions?.map((q, index) => {
-            const questionOptions = options.filter(
-              (opt) => opt.questionId === q.id,
-            );
-
+          {questions.map((q, index) => {
             return (
               <div key={q.id} className="p-6 border border-gray-200">
                 <div className="flex flex-col gap-4">
                   {/* Question */}
                   <QuestionInput id={q.id} order={index} />
+
                   {/* Layout */}
-                  {q.type !== "short" && (
+                  {/* {q.type !== "short" && (
                     <LayoutOptions id={q.id} layoutData={q.layout} />
-                  )}
+                  )} */}
 
                   {/* Fill in the blank */}
-                  {q.type === "short" && <FillTheBlankInput index={index} />}
+                  {/* {q.type === "short" && <FillTheBlankInput index={index} />} */}
+
                   {/* Multiple Choice */}
                   {q.type !== "short" && (
                     <div
@@ -90,18 +58,18 @@ export default function QuestionBuilder({ quiz }) {
                       {questionOptions.map((opt) => (
                         <MultipleChoicesInput key={opt.id} opt={opt} />
                       ))}
-
-                      {/* Footer */}
                     </div>
                   )}
-                  <div className="flex items-center justify-end gap-3 mt-5 w-full">
-                    <QuestionFooter
-                      questionId={q.id}
-                      setOpenMenu={setOpenMenu}
-                      openMenu={openMenu}
-                    />
-                  </div>
                 </div>
+
+                {/* Footer */}
+                {/* <div className="flex items-center justify-end gap-3 mt-5 w-full">
+                  <QuestionFooter
+                    index={index}
+                    setOpenMenu={setOpenMenu}
+                    openMenu={openMenu}
+                  />
+                </div> */}
               </div>
             );
           })}

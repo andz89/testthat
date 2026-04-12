@@ -1,38 +1,27 @@
 import React from "react";
+import { useQuizStore } from "../../store/QuizStore";
 
-const LayoutOptions = ({ register, index }) => {
+const LayoutOptions = ({ id, layoutData }) => {
+  const updateQuestion = useQuizStore((state) => state.updateQuestion);
+
+  // ✅ guard against undefined (very important)
+  if (!layoutData) return null;
+
   return (
-    <>
-      <div className="flex gap-2 text-sm">
-        <span>Options layout:</span>
+    <div className="flex gap-2 text-sm">
+      <span>Options layout:</span>
 
-        <label className="flex items-center gap-1">
+      {["col", "row", "grid"].map((layout) => (
+        <label key={layout} className="flex gap-1">
           <input
             type="radio"
-            value="col"
-            {...register(`questions.${index}.layout`)}
+            checked={layoutData === layout}
+            onChange={() => updateQuestion(id, { layout })}
           />
-          Column
+          {layout}
         </label>
-
-        <label className="flex items-center gap-1">
-          <input
-            type="radio"
-            value="row"
-            {...register(`questions.${index}.layout`)}
-          />
-          Row
-        </label>
-        <label className="flex items-center gap-1">
-          <input
-            type="radio"
-            value="grid"
-            {...register(`questions.${index}.layout`)}
-          />
-          Grid
-        </label>
-      </div>
-    </>
+      ))}
+    </div>
   );
 };
 

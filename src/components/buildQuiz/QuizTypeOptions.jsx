@@ -1,64 +1,37 @@
 import React from "react";
+import { useQuizStore } from "../../store/QuizStore";
+const QuizTypeOptions = ({ questionId, setOpenMenu }) => {
+  const { addQuestionAfter } = useQuizStore();
 
-const QuizTypeOptions = ({ index, insert, setOpenMenu }) => {
+  const handleAdd = (type) => {
+    console.log(
+      "Adding question of type:",
+      type,
+      "-after question ID:",
+      questionId,
+    );
+    addQuestionAfter(questionId, type);
+    setOpenMenu(null);
+  };
+
   return (
     <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-20">
       <button
-        type="button"
-        onClick={() => {
-          insert(index + 1, {
-            id: Date.now(),
-            type: "multiple",
-            layout: "col",
-            question: "",
-            options: [
-              { id: 1, label: "option 1", value: "A" },
-              { id: 2, label: "option 2", value: "B" },
-              { id: 3, label: "option 3", value: "C" },
-              { id: 4, label: "option 4", value: "D" },
-            ],
-            correct: "",
-          });
-          setOpenMenu(null);
-        }}
+        onClick={() => handleAdd("multiple")}
         className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
       >
         Multiple Choice
       </button>
 
       <button
-        type="button"
-        onClick={() => {
-          insert(index + 1, {
-            id: Date.now(),
-            type: "boolean",
-            layout: "col",
-            question: "",
-            options: [
-              { id: 1, label: "True", value: "A" },
-              { id: 2, label: "False", value: "B" },
-            ],
-            correct: "",
-          });
-          setOpenMenu(null);
-        }}
+        onClick={() => handleAdd("boolean")}
         className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
       >
         True / False
       </button>
+
       <button
-        type="button"
-        onClick={() => {
-          insert(index + 1, {
-            id: Date.now(),
-            type: "short",
-            layout: "col",
-            question: "",
-            options: [],
-            correct: "",
-          });
-          setOpenMenu(null);
-        }}
+        onClick={() => handleAdd("short")}
         className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
       >
         Fill in the Blank
@@ -66,5 +39,4 @@ const QuizTypeOptions = ({ index, insert, setOpenMenu }) => {
     </div>
   );
 };
-
 export default QuizTypeOptions;

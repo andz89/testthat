@@ -1,49 +1,44 @@
-import React from "react";
+import { useQuizStore } from "../../store/QuizStore";
 import QuizTypeOptions from "./QuizTypeOptions";
 import { BiDuplicate, BiPlus, BiSolidTrash } from "react-icons/bi";
-const QuestionFooter = ({
-  index,
-  setOpenMenu,
-  insert,
-  duplicateQuestion,
-  remove,
-  openMenu,
-}) => {
+
+const QuestionFooter = ({ questionId, openMenu, setOpenMenu }) => {
+  const { removeQuestion, duplicateQuestion } = useQuizStore();
+
   return (
-    <>
-      {" "}
+    <div className="flex items-center gap-2">
+      {/* Add */}
       <div className="relative">
         <button
-          type="button"
-          onClick={() => setOpenMenu(openMenu === index ? null : index)}
-          className="flex cursor-pointer items-center justify-center w-9 h-9 rounded-md border border-slate-300 hover:bg-slate-100 hover:border-slate-400 transition"
+          onClick={() =>
+            setOpenMenu(openMenu === questionId ? null : questionId)
+          }
+          className="flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-100 hover:border-gray-400 transition"
         >
-          <BiPlus size={18} className="text-slate-700" />
+          <BiPlus size={18} className="text-gray-700" />
         </button>
 
-        {openMenu === index && (
-          <QuizTypeOptions
-            index={index}
-            insert={insert}
-            setOpenMenu={setOpenMenu}
-          />
+        {openMenu === questionId && (
+          <QuizTypeOptions questionId={questionId} setOpenMenu={setOpenMenu} />
         )}
       </div>
+
+      {/* Duplicate */}
       <button
-        type="button"
-        onClick={() => duplicateQuestion(index)}
-        className="flex cursor-pointer items-center justify-center w-9 h-9 rounded-md border border-slate-300 hover:bg-blue-50 hover:border-blue-400 transition"
+        onClick={() => duplicateQuestion(questionId)}
+        className="flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-blue-50 hover:border-blue-400 transition"
       >
-        <BiDuplicate size={18} className="text-slate-700 hover:text-blue-600" />
+        <BiDuplicate size={18} className="text-gray-700 hover:text-blue-600" />
       </button>
+
+      {/* Delete */}
       <button
-        type="button"
-        onClick={() => remove(index)}
-        className="flex cursor-pointer items-center justify-center w-9 h-9 rounded-md border border-slate-300 hover:bg-red-50 hover:border-red-400 transition"
+        onClick={() => removeQuestion(questionId)}
+        className="flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-red-50 hover:border-red-400 transition"
       >
-        <BiSolidTrash size={18} className="text-slate-700 hover:text-red-600" />
+        <BiSolidTrash size={18} className="text-gray-700 hover:text-red-600" />
       </button>
-    </>
+    </div>
   );
 };
 
