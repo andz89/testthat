@@ -105,14 +105,18 @@ export const useQuizStore = create((set) => ({
           : opt,
       ),
     })),
-  removeQuestion: (index) =>
+  removeQuestion: (questionId) =>
     set((state) => {
-      const q = state.questions[index];
-
+      const q = state.questions.find((question) => question.id === questionId);
+      console.log("Removing question", questionId, "question:", q);
       return {
-        questions: state.questions.filter((_, i) => i !== index),
+        questions: state.questions.filter(
+          (question) => question.id !== questionId,
+        ),
         options: state.options.filter((opt) => opt.questionId !== q.id),
-        deletedQuestions: [...state.deletedQuestions, q.id],
+        deletedQuestions: q.isNew
+          ? state.deletedQuestions
+          : [...state.deletedQuestions, q.id],
       };
     }),
 
@@ -205,6 +209,7 @@ export const useQuizStore = create((set) => ({
 
         return {
           ...q,
+          isNew: false,
           dirtyFields: newDirtyFields,
           isDirty: Object.keys(newDirtyFields).length > 0,
         };
@@ -242,5 +247,6 @@ export const useQuizStore = create((set) => ({
             };
           })()
         : state.details,
+      deletedQuestions: [], //
     })),
 }));

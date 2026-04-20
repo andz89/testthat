@@ -9,7 +9,6 @@ export default async function Page({ params }) {
 
   return (
     <div>
-      <h1>Create Questions</h1>
       <QuestionBuilder quiz={quiz} />
     </div>
   );

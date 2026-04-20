@@ -8,15 +8,26 @@ import MultipleChoicesInput from "./MultipleChoicesInput";
 import FillTheBlankInput from "./FillTheBlankInput";
 import QuestionFooter from "./QuestionFooter";
 import { useQuizStore } from "../../store/QuizStore";
-import { useDebounce } from "../../hooks/useDebounce";
+
+import ErrorModal from "../modal/ErrorModal";
+import PublishSettingsModal from "../modal/PublishSettingsModal";
+import { useSaveQuiz } from "../hooks/useSaveQuiz";
 export default function QuestionBuilder({ quiz }) {
+  const {
+    questions,
+    addQuestion,
+    options,
+
+    setDetails,
+    details,
+    deletedQuestions,
+  } = useQuizStore();
+
+  const { handleSave, sending, error, setError } = useSaveQuiz();
   const [openMenu, setOpenMenu] = useState(null);
+  const [openPublishModal, setOpenPublishModal] = useState(false);
 
-  const { questions, addQuestion, options, clearDirty, setDetails, details } =
-    useQuizStore();
-
-  const [sending, setSending] = useState(false);
-  const isSavingRef = useRef(false);
+  const [manualSave, setManualSave] = useState(false);
 
   // ✅ compute dirty state (for UI only)
   const dirtyQuestions = questions.filter((q) => q.isDirty);
@@ -24,86 +35,11 @@ export default function QuestionBuilder({ quiz }) {
   const dirtyDetails = details?.isDirty;
 
   const isDirty =
-    dirtyQuestions.length > 0 || dirtyOptions.length > 0 || dirtyDetails;
+    dirtyQuestions.length > 0 ||
+    dirtyOptions.length > 0 ||
+    dirtyDetails ||
+    deletedQuestions.length > 0;
 
-  // ✅ MAIN SAVE FUNCTION (no stale data)
-  const handleSave = useCallback(async () => {
-    if (isSavingRef.current) return;
-    if (!details?.quizId) return;
-
-    // 🔥 recompute INSIDE (avoid stale closure)
-    const dirtyQuestions = questions.filter((q) => q.isDirty);
-    const dirtyOptions = options.filter((o) => o.isDirty);
-    const dirtyDetails = details?.isDirty;
-    console.log("Auto-saving checking dirty state...");
-    if (
-      dirtyQuestions.length === 0 &&
-      dirtyOptions.length === 0 &&
-      !dirtyDetails
-    )
-      return;
-
-    isSavingRef.current = true;
-    setSending(true);
-
-    const questionPayload = dirtyQuestions.map((q) => {
-      const fields = Object.keys(q.dirtyFields || {});
-      const updatedFields = fields.reduce((acc, key) => {
-        acc[key] = q[key];
-        return acc;
-      }, {});
-      return {
-        quizId: details.quizId,
-        id: q.id,
-        ...updatedFields,
-      };
-    });
-
-    const optionPayload = dirtyOptions.map((o) => {
-      const fields = Object.keys(o.dirtyFields || {});
-      const updatedFields = fields.reduce((acc, key) => {
-        acc[key] = o[key];
-        return acc;
-      }, {});
-      return {
-        id: o.id,
-        ...updatedFields,
-      };
-    });
-
-    const detailsPayload = dirtyDetails
-      ? {
-          id: details.quizId,
-          ...Object.fromEntries(
-            Object.keys(details.dirtyFields || {}).map((k) => [k, details[k]]),
-          ),
-        }
-      : null;
-
-    console.log("Saving...", {
-      questions: questionPayload,
-      options: optionPayload,
-      details: detailsPayload,
-    });
-
-    // ✅ simulate API delay (better than setTimeout)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    clearDirty({
-      questions: dirtyQuestions.map((q) => ({
-        id: q.id,
-        fields: Object.keys(q.dirtyFields || {}),
-      })),
-      options: dirtyOptions.map((o) => ({
-        id: o.id,
-        fields: Object.keys(o.dirtyFields || {}),
-      })),
-      details: dirtyDetails ? Object.keys(details.dirtyFields || {}) : [],
-    });
-
-    isSavingRef.current = false;
-    setSending(false);
-  }, [questions, options, details, clearDirty]);
   // ✅ NOW define ref AFTER
   const saveRef = useRef(handleSave);
   useEffect(() => {
@@ -136,29 +72,67 @@ export default function QuestionBuilder({ quiz }) {
       objectives: quiz.objectives || "",
     });
   }, [quiz]);
+  const handlePublish = (settings) => {
+    console.log("Publishing with settings:", settings);
+
+    // call your API here
+  };
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-[720px] mx-auto py-10 mb-20">
-        <div className="fixed bottom-6 right-6">
-          <button
-            onClick={handleSave}
-            disabled={sending || !isDirty}
-            className={`px-4 py-2 rounded shadow-lg ${
-              sending
-                ? "bg-gray-400"
-                : !isDirty
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-500 text-white"
+      {/* quiz header */}
+      <div className="fixed top-0   py-2 bg-gray-50 z-10 flex items-center gap-4 w-full justify-end px-6 border-b border-gray-200 ">
+        <div className="">
+          <span
+            className={`px-4 py-2 rounded   ${
+              sending ? "bg-yellow-100 text-yellow-800 " : "opacity-0"
             }`}
           >
-            {sending ? "Saving..." : "Save"}
-          </button>
+            {manualSave ? "Saving..." : "Auto saving..."}
+          </span>
         </div>
-        <div className="flex flex-col">
+        <ErrorModal
+          isOpen={!!error}
+          onClose={() => setError(null)}
+          title="Save Failed"
+          message={error?.message}
+          type={error?.type}
+        />
+        <button
+          onClick={() => {
+            setManualSave(true);
+            handleSave();
+          }}
+          disabled={sending || !isDirty}
+          className={`px-4 py-2 rounded shadow-sm ${
+            sending
+              ? "bg-gray-400"
+              : !isDirty
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-500 text-white cursor-pointer"
+          }`}
+        >
+          Save
+        </button>
+        <PublishSettingsModal
+          isOpen={openPublishModal}
+          onClose={() => setOpenPublishModal(false)}
+          onPublish={handlePublish}
+        />
+        <button
+          onClick={() => setOpenPublishModal(true)}
+          className={`cursor-pointer px-4 py-2 rounded shadow-sm bg-green-700 text-white `}
+        >
+          Publish
+        </button>
+      </div>
+      {/* quiz header end */}
+
+      <div className="max-w-[720px] mx-auto    ">
+        <div className="flex flex-col pt-20">
           {/* Quiz Details */}
           <QuizDetails quiz={quiz} />
 
-          {/* Questions */}
+          {/* Questions details end */}
 
           {questions?.map((q, index) => {
             const questionOptions = options.filter(
