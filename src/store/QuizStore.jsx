@@ -9,27 +9,29 @@ const createEmptyQuestion = (type = "multiple") => ({
   correct: "",
   isDirty: true,
   isNew: true, // 👈 add this (important)
-
+  showLabel: true, // ✅ default ON
   dirtyFields: {
     question_id: true,
     question: true,
     type: true,
     layout: true,
     correct: true,
+    showLabel: true, // ✅ track this
   },
 });
-const createOption = (questionId, label = "", value = "") => ({
+const createOption = (questionId, label = "") => ({
   option_id: Date.now() + Math.random(),
   question_id: questionId,
   label,
-  value,
+  order: 0,
   isDirty: true,
   isNew: true, // 👈 add this
 
   dirtyFields: {
     label: true,
-    value: true,
+
     question_id: true,
+    order: true,
   },
 });
 
@@ -41,6 +43,22 @@ export const useQuizStore = create((set) => ({
   details: {},
 
   setDetails: (details) => set({ details }),
+  updateQuestionLabelVisibility: (question_id, value) =>
+    set((state) => ({
+      questions: state.questions.map((q) => {
+        if (q.question_id !== question_id) return q;
+
+        return {
+          ...q,
+          showLabel: value,
+          isDirty: true,
+          dirtyFields: {
+            ...(q.dirtyFields || {}),
+            showLabel: true,
+          },
+        };
+      }),
+    })),
   addQuestion: () =>
     set((state) => {
       const q = createEmptyQuestion("multiple");
@@ -53,7 +71,17 @@ export const useQuizStore = create((set) => ({
     }),
   addOption: (question_id) =>
     set((state) => {
-      const newOption = [createOption(question_id, "", "4")];
+      console.log("Adding option to question", state.options);
+      const currentOptions = state.options.filter(
+        (opt) => opt.question_id === question_id,
+      );
+
+      // ✅ safer than length
+      const maxOrder = currentOptions.length
+        ? Math.max(...currentOptions.map((o) => o.order ?? 0))
+        : -1;
+
+      const newOption = [createOption(question_id, "", maxOrder + 1)];
 
       return {
         options: [...state.options, ...newOption],
@@ -178,34 +206,57 @@ export const useQuizStore = create((set) => ({
 
   addQuestionAfter: (questionId, type) =>
     set((state) => {
-      const index = state.questions.findIndex(
-        (q) => q.question_id === questionId,
-      );
+      if (questionId === null) {
+        const newQuestion = {
+          ...createEmptyQuestion(type),
+          question_id: Date.now(),
+          type,
+        };
+        let newOptions = [];
 
-      if (index === -1) return state;
+        if (type === "multiple") {
+          newOptions = [createOption(newQuestion.question_id, "", "1")];
+        }
 
-      // ✅ create question properly with type
-      const newQuestion = {
-        ...createEmptyQuestion(),
-        question_id: Date.now(),
-        type,
-      };
+        // ✅ short = no options (correct)
 
-      let newOptions = [];
+        const newQuestions = [...state.questions];
+        newQuestions.splice(newQuestions.length, 0, newQuestion);
 
-      if (type === "multiple") {
-        newOptions = [createOption(newQuestion.question_id, "", "1")];
+        return {
+          questions: newQuestions,
+          options: [...state.options, ...newOptions],
+        };
+      } else {
+        const index = state.questions.findIndex(
+          (q) => q.question_id === questionId,
+        );
+
+        if (index === -1) return state;
+
+        // ✅ create question properly with type
+        const newQuestion = {
+          ...createEmptyQuestion(),
+          question_id: Date.now(),
+          type,
+        };
+
+        let newOptions = [];
+
+        if (type === "multiple") {
+          newOptions = [createOption(newQuestion.question_id, "", "1")];
+        }
+
+        // ✅ short = no options (correct)
+
+        const newQuestions = [...state.questions];
+        newQuestions.splice(index, 0, newQuestion);
+
+        return {
+          questions: newQuestions,
+          options: [...state.options, ...newOptions],
+        };
       }
-
-      // ✅ short = no options (correct)
-
-      const newQuestions = [...state.questions];
-      newQuestions.splice(index, 0, newQuestion);
-
-      return {
-        questions: newQuestions,
-        options: [...state.options, ...newOptions],
-      };
     }),
 
   clearDirty: ({ questions = [], options = [], details = [] }) =>

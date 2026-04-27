@@ -44,6 +44,7 @@ export async function POST(req) {
       .from("options")
       .upsert(optionsWithUser, { onConflict: "option_id" });
 
+    console.log("options upsert result:", optionsWithUser);
     if (oError) throw oError;
 
     // Delete removed questions
