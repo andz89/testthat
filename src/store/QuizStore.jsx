@@ -37,23 +37,26 @@ export const useQuizStore = create((set) => ({
   questions: [],
   options: [],
   deletedQuestions: [],
+  deletedOptions: [],
   details: {},
 
   setDetails: (details) => set({ details }),
   addQuestion: () =>
     set((state) => {
       const q = createEmptyQuestion("multiple");
-
-      const newOptions = [
-        createOption(q.question_id, "", "A"),
-        createOption(q.question_id, "", "B"),
-        createOption(q.question_id, "", "C"),
-        createOption(q.question_id, "", "D"),
-      ];
+      const newOptions = [createOption(q.question_id, "", "1")];
 
       return {
         questions: [...state.questions, q],
         options: [...state.options, ...newOptions],
+      };
+    }),
+  addOption: (question_id) =>
+    set((state) => {
+      const newOption = [createOption(question_id, "", "4")];
+
+      return {
+        options: [...state.options, ...newOption],
       };
     }),
   updateDetails: (key, value) =>
@@ -124,6 +127,19 @@ export const useQuizStore = create((set) => ({
           : [...state.deletedQuestions, q.question_id],
       };
     }),
+  removeOption: (optionId) =>
+    set((state) => {
+      const opt = state.options.find((option) => option.option_id === optionId);
+
+      return {
+        options: state.options.filter(
+          (option) => option.option_id !== optionId,
+        ),
+        deletedOptions: opt.isNew
+          ? state.deletedOptions
+          : [...state.deletedOptions, opt.option_id],
+      };
+    }),
 
   duplicateQuestion: (questionId) =>
     set((state) => {
@@ -178,25 +194,13 @@ export const useQuizStore = create((set) => ({
       let newOptions = [];
 
       if (type === "multiple") {
-        newOptions = [
-          createOption(newQuestion.question_id, "", "A"),
-          createOption(newQuestion.question_id, "", "B"),
-          createOption(newQuestion.question_id, "", "C"),
-          createOption(newQuestion.question_id, "", "D"),
-        ];
-      }
-
-      if (type === "boolean") {
-        newOptions = [
-          createOption(newQuestion.question_id, "True", "A"),
-          createOption(newQuestion.question_id, "False", "B"),
-        ];
+        newOptions = [createOption(newQuestion.question_id, "", "1")];
       }
 
       // ✅ short = no options (correct)
 
       const newQuestions = [...state.questions];
-      newQuestions.splice(index + 1, 0, newQuestion);
+      newQuestions.splice(index, 0, newQuestion);
 
       return {
         questions: newQuestions,
@@ -259,5 +263,7 @@ export const useQuizStore = create((set) => ({
           })()
         : state.details,
       deletedQuestions: [], //
+
+      deletedOptions: [], //
     })),
 }));

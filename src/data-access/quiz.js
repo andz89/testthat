@@ -56,7 +56,7 @@ export async function getQuiz() {
   const { data, error } = await supabase
     .from("quizzes")
     .select("*")
-    .eq("owner_id", user.id) // 🔥 filter by user
+    .eq("user_id", user.id) // 🔥 filter by user
     .order("created_at", { ascending: false });
 
   if (error) {

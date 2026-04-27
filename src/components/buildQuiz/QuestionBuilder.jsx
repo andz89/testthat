@@ -42,6 +42,8 @@ export default function QuestionBuilder({ quiz }) {
     setDetails,
     details,
     deletedQuestions,
+    deletedOptions,
+    addOption,
   } = useQuizStore();
 
   const { handleSave, sending, error, setError } = useSaveQuiz();
@@ -59,7 +61,8 @@ export default function QuestionBuilder({ quiz }) {
     dirtyQuestions.length > 0 ||
     dirtyOptions.length > 0 ||
     dirtyDetails ||
-    deletedQuestions.length > 0;
+    deletedQuestions.length > 0 ||
+    deletedOptions.length > 0;
 
   const saveRef = useRef(handleSave);
   useEffect(() => {
@@ -67,14 +70,31 @@ export default function QuestionBuilder({ quiz }) {
   }, [handleSave]);
 
   //  INTERVAL AUTOSAVE (stable, no reset)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      saveRef.current(); // always latest, but interval never resets
-    }, 15000);
-    if (!isDirty) return; // if not dirty, don't set interval
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     saveRef.current(); // always latest, but interval never resets
+  //   }, 15000);
+  //   if (!isDirty) return; // if not dirty, don't set interval
+  //   return () => clearInterval(interval);
+  // }, []);
 
+  const activeRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!activeRef.current) return;
+
+      if (!activeRef.current.contains(event.target)) {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
   useEffect(() => {
     if (!quiz || quiz.length === 0) return;
 
@@ -110,7 +130,7 @@ export default function QuestionBuilder({ quiz }) {
     // call your API here
   };
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen mb-40">
       {/* quiz header */}
       <div className="fixed top-0   py-2 bg-gray-50 z-10 flex items-center gap-4 w-full justify-end px-6 border-b border-gray-200 ">
         <div className="">
@@ -165,54 +185,72 @@ export default function QuestionBuilder({ quiz }) {
           <QuizDetails quiz={quiz} />
 
           {/* Questions details end */}
+          <div>
+            {questions?.map((q, index) => {
+              const questionOptions = options.filter(
+                (opt) => opt.question_id === q.question_id,
+              );
 
-          {questions?.map((q, index) => {
-            const questionOptions = options.filter(
-              (opt) => opt.question_id === q.question_id,
-            );
-
-            return (
-              <div key={q.question_id} className="p-6 border border-gray-200">
-                <div className="flex flex-col gap-4">
-                  {/* Question */}
-
-                  <QuestionInput id={q.question_id} order={index} />
-                  {/* Layout */}
-                  {q.type !== "short" && (
-                    <LayoutOptions id={q.question_id} layoutData={q.layout} />
-                  )}
-
-                  {/* Fill in the blank */}
-                  {q.type === "short" && <FillTheBlankInput index={index} />}
-                  {/* Multiple Choice */}
-                  {q.type !== "short" && (
-                    <div
-                      className={`gap-2 ${
-                        q.layout === "row"
-                          ? "flex flex-row flex-wrap justify-around"
-                          : q.layout === "grid"
-                            ? "grid grid-cols-2"
-                            : "flex flex-col"
-                      }`}
-                    >
-                      {questionOptions.map((opt) => (
-                        <MultipleChoicesInput key={opt.option_id} opt={opt} />
-                      ))}
-
-                      {/* Footer */}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-end gap-3 mt-5 w-full">
+              return (
+                <div key={q.question_id} className="  ">
+                  <div className="flex items-center justify-end gap-3  w-full mt-7 mb-1">
                     <QuestionFooter
+                      questionLength={questions.length}
                       questionId={q.question_id}
                       setOpenMenu={setOpenMenu}
                       openMenu={openMenu}
+                      isActive={openMenu === q.question_id}
+                      activeRef={activeRef}
                     />
                   </div>
+                  <div className="flex flex-col gap-4 p-6 border border-gray-200 rounded">
+                    {/* Question */}
+
+                    <QuestionInput id={q.question_id} order={index} />
+                    {/* Layout */}
+                    {q.type !== "short" && (
+                      <LayoutOptions id={q.question_id} layoutData={q.layout} />
+                    )}
+
+                    {/* Fill in the blank */}
+                    {q.type === "short" && <FillTheBlankInput index={index} />}
+                    {/* Multiple Choice */}
+                    {q.type !== "short" && (
+                      <div
+                        className={`gap-2 ${
+                          q.layout === "row"
+                            ? "flex flex-row flex-wrap justify-around"
+                            : q.layout === "grid"
+                              ? "grid grid-cols-2"
+                              : "flex flex-col"
+                        }`}
+                      >
+                        {questionOptions.map((opt, index) => (
+                          <MultipleChoicesInput
+                            questionOptionsLength={questionOptions.length}
+                            key={opt.option_id}
+                            opt={opt}
+                            index={index}
+                          />
+                        ))}
+
+                        {/* Footer */}
+                      </div>
+                    )}
+
+                    {q.type !== "short" && (
+                      <button
+                        onClick={() => addOption(q.question_id)}
+                        className="ml-2 px-2 py-1 text-sm text-gray-600 bg-gray-200 rounded hover:bg-gray-300 transition w-32"
+                      >
+                        + Add Option
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

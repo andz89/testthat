@@ -1,21 +1,29 @@
 import { useQuizStore } from "../../store/QuizStore";
+
 import QuizTypeOptions from "./QuizTypeOptions";
 import { BiDuplicate, BiPlus, BiSolidTrash } from "react-icons/bi";
 
-const QuestionFooter = ({ questionId, openMenu, setOpenMenu }) => {
+const QuestionFooter = ({
+  questionLength,
+  questionId,
+  openMenu,
+  setOpenMenu,
+  isActive,
+  activeRef,
+}) => {
   const { removeQuestion, duplicateQuestion } = useQuizStore();
 
   return (
-    <div className="flex items-center gap-2">
+    <div ref={isActive ? activeRef : null} className="flex items-center gap-2">
       {/* Add */}
       <div className="relative">
         <button
           onClick={() =>
             setOpenMenu(openMenu === questionId ? null : questionId)
           }
-          className="flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-gray-100 hover:border-gray-400 transition"
+          className="hover:cursor-pointer flex items-center justify-center w-7 h-7 rounded-md border border-gray-300 bg-white hover:bg-gray-100 hover:border-gray-400 transition"
         >
-          <BiPlus size={18} className="text-gray-700" />
+          <BiPlus size={16} className="text-gray-700" />
         </button>
 
         {openMenu === questionId && (
@@ -26,17 +34,30 @@ const QuestionFooter = ({ questionId, openMenu, setOpenMenu }) => {
       {/* Duplicate */}
       <button
         onClick={() => duplicateQuestion(questionId)}
-        className="flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-blue-50 hover:border-blue-400 transition"
+        className="hover:cursor-pointer flex items-center justify-center w-7 h-7 rounded-md border border-gray-300 bg-white hover:bg-blue-50 hover:border-blue-400 transition"
       >
-        <BiDuplicate size={18} className="text-gray-700 hover:text-blue-600" />
+        <BiDuplicate size={16} className="text-gray-700 hover:text-blue-600" />
       </button>
 
       {/* Delete */}
+
       <button
+        disabled={questionLength <= 1}
         onClick={() => removeQuestion(questionId)}
-        className="flex items-center justify-center w-9 h-9 rounded-md border border-gray-300 bg-white hover:bg-red-50 hover:border-red-400 transition"
+        className={`${
+          questionLength <= 1
+            ? "cursor-not-allowed   flex items-center justify-center w-7 h-7 rounded-md border border-gray-300 bg-gray-100   transition"
+            : "hover:cursor-pointer flex items-center justify-center w-7 h-7 rounded-md border border-gray-300 bg-white hover:bg-red-50 hover:border-red-400 transition"
+        }`}
       >
-        <BiSolidTrash size={18} className="text-gray-700 hover:text-red-600" />
+        <BiSolidTrash
+          size={16}
+          className={`${
+            questionLength <= 1
+              ? "text-gray-400"
+              : "text-gray-700 hover:text-red-400"
+          }`}
+        />
       </button>
     </div>
   );

@@ -1,8 +1,14 @@
 import React, { useRef, useEffect } from "react";
 import { useQuizStore } from "../../store/QuizStore";
-const MultipleChoicesInput = ({ opt }) => {
+import { BsX } from "react-icons/bs";
+const getOptionLabel = (index) => {
+  return String.fromCharCode(65 + index); // 65 = "A"
+};
+const MultipleChoicesInput = ({ opt, index, questionOptionsLength }) => {
   const updateOption = useQuizStore((state) => state.updateOption);
   const updateQuestion = useQuizStore((state) => state.updateQuestion);
+  const removeOption = useQuizStore((state) => state.removeOption);
+
   const questions = useQuizStore((state) => state.questions);
 
   const ref = useRef(null);
@@ -41,7 +47,9 @@ const MultipleChoicesInput = ({ opt }) => {
       </label>
 
       {/* Label */}
-      <span className="w-[20px] font-bold mt-[6px]">{opt.value}.</span>
+      <span className="w-[20px] font-bold mt-[6px]">
+        {getOptionLabel(index)}.
+      </span>
 
       {/* Editable */}
       <div
@@ -51,6 +59,20 @@ const MultipleChoicesInput = ({ opt }) => {
         className="focus:outline-none bg-gray-50 border border-gray-300 rounded p-1 w-full min-h-[30px]"
         onInput={(e) => handleOptionChange(e.currentTarget.textContent)}
       />
+      <button
+        disabled={questionOptionsLength <= 1}
+        onClick={() => removeOption(opt.option_id)}
+        className="font-light"
+      >
+        <BsX
+          size={33}
+          className={`${
+            questionOptionsLength <= 1
+              ? "opacity-300 cursor-not-allowed text-gray-300"
+              : "text-gray-500 hover:text-gray-700 font-light hover:bg-gray-200 hover:cursor-pointer transition rounded-sm"
+          }`}
+        />
+      </button>
     </div>
   );
 };

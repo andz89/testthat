@@ -11,6 +11,7 @@ export async function POST(req) {
       options = [],
       details,
       deletedQuestions = [],
+      deletedOptions = [],
     } = body;
 
     if (!Array.isArray(questions) || !Array.isArray(options)) {
@@ -53,6 +54,16 @@ export async function POST(req) {
         .in("question_id", deletedQuestions)
         .eq("user_id", user.id);
       console.log(deletedQuestions, "questions deleted");
+      if (dError) throw dError;
+    }
+    // Delete removed options
+    if (deletedOptions.length) {
+      const { error: dError } = await supabase
+        .from("options")
+        .delete()
+        .in("option_id", deletedOptions)
+        .eq("user_id", user.id);
+      console.log(deletedOptions, "options deleted");
       if (dError) throw dError;
     }
     if (details && typeof details === "object") {

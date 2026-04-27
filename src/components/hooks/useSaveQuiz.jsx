@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { useQuizStore } from "../../store/QuizStore";
 import { buildQuizPayload } from "../utils/buildQuizPayload";
+import { de } from "zod/v4/locales";
 const saveQuiz = async (payload) => {
   const res = await fetch("/api/saveQuiz", {
     method: "POST",
@@ -23,8 +24,14 @@ const saveQuiz = async (payload) => {
 };
 
 export function useSaveQuiz() {
-  const { questions, options, details, clearDirty, deletedQuestions } =
-    useQuizStore();
+  const {
+    questions,
+    options,
+    details,
+    clearDirty,
+    deletedQuestions,
+    deletedOptions,
+  } = useQuizStore();
 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
@@ -42,7 +49,8 @@ export function useSaveQuiz() {
       dirtyQuestions.length === 0 &&
       dirtyOptions.length === 0 &&
       !dirtyDetails &&
-      deletedQuestions.length === 0
+      deletedQuestions.length === 0 &&
+      deletedOptions.length === 0
     ) {
       return;
     }
@@ -55,6 +63,7 @@ export function useSaveQuiz() {
         options,
         details,
         deletedQuestions,
+        deletedOptions,
       });
 
       if (!payload) return;
@@ -73,6 +82,7 @@ export function useSaveQuiz() {
         options: optionPayload,
         details: detailsPayload,
         deletedQuestions,
+        deletedOptions,
       });
 
       // simulate API
@@ -81,15 +91,16 @@ export function useSaveQuiz() {
         options: optionPayload,
         details: detailsPayload,
         deletedQuestions,
+        deletedOptions,
       });
 
       clearDirty({
         questions: dirtyQuestions.map((q) => ({
-          id: q.id,
+          question_id: q.question_id,
           fields: Object.keys(q.dirtyFields || {}),
         })),
         options: dirtyOptions.map((o) => ({
-          id: o.id,
+          option_id: o.option_id,
           fields: Object.keys(o.dirtyFields || {}),
         })),
         details: dirtyDetails ? Object.keys(details.dirtyFields || {}) : [],
@@ -103,7 +114,14 @@ export function useSaveQuiz() {
       isSavingRef.current = false;
       setSending(false);
     }
-  }, [questions, options, details, clearDirty, deletedQuestions]);
+  }, [
+    questions,
+    options,
+    details,
+    clearDirty,
+    deletedQuestions,
+    deletedOptions,
+  ]);
 
   return {
     handleSave,

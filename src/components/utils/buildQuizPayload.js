@@ -3,6 +3,7 @@ export function buildQuizPayload({
   options,
   details,
   deletedQuestions,
+  deletedOptions,
 }) {
   const dirtyQuestions = questions.filter((q) => q.isDirty);
   const dirtyOptions = options.filter((o) => o.isDirty);
@@ -12,7 +13,8 @@ export function buildQuizPayload({
     dirtyQuestions.length > 0 ||
     dirtyOptions.length > 0 ||
     dirtyDetails ||
-    deletedQuestions.length > 0;
+    deletedQuestions.length > 0 ||
+    deletedOptions.length > 0;
 
   if (!hasChanges) return null;
 
@@ -56,6 +58,7 @@ export function buildQuizPayload({
     options: optionPayload,
     details: detailsPayload,
     deletedQuestions,
+    deletedOptions,
     dirtyQuestions,
     dirtyOptions,
     dirtyDetails,
